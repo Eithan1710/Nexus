@@ -11,20 +11,28 @@ import { guessIcon } from '../lib/icons'
 import { nextColor } from '../lib/colors'
 
 const DRAFT_KEY = 'nx-draft'
+const TITLE_KEY = 'nx-draft-title'
 
-function loadDraft() {
+function loadDraft(key) {
   try {
-    return localStorage.getItem(DRAFT_KEY) || ''
+    return localStorage.getItem(key) || ''
   } catch {
     return ''
   }
+}
+function saveDraft(key, value) {
+  try {
+    if (value) localStorage.setItem(key, value)
+    else localStorage.removeItem(key)
+  } catch {}
 }
 
 export default function QuickCapture() {
   const { capture } = useUI()
   const { topics, items, prefs } = useStore()
   const open = !!capture
-  const [text, setText] = useState(loadDraft)
+  const [text, setText] = useState(() => loadDraft(DRAFT_KEY))
+  const [title, setTitle] = useState(() => loadDraft(TITLE_KEY))
   const [topicId, setTopicId] = useState(null)
   const [filter, setFilter] = useState('')
   const [nudge, setNudge] = useState(false)
@@ -50,12 +58,8 @@ export default function QuickCapture() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capture?.at])
 
-  useEffect(() => {
-    try {
-      if (text) localStorage.setItem(DRAFT_KEY, text)
-      else localStorage.removeItem(DRAFT_KEY)
-    } catch {}
-  }, [text])
+  useEffect(() => saveDraft(DRAFT_KEY, text), [text])
+  useEffect(() => saveDraft(TITLE_KEY, title), [title])
 
   useEffect(() => {
     const el = fieldRef.current
@@ -102,12 +106,14 @@ export default function QuickCapture() {
       setTimeout(() => setNudge(false), 600)
       return
     }
-    if (!content.trim() && !openFull) {
+    const t = title.trim()
+    if (!content.trim() && !t && !openFull) {
       fieldRef.current?.focus()
       return
     }
-    const item = createItem({ topicId: tid, content })
+    const item = createItem({ topicId: tid, title: t, content })
     setText('')
+    setTitle('')
     closeCapture()
     const topic = topics.find((t) => t.id === tid)
     if (openFull) navigate(`/i/${item.id}/new`)
@@ -121,11 +127,27 @@ export default function QuickCapture() {
           ביטול
         </button>
         <div className="sheet-title">רעיון חדש</div>
-        <button type="button" className="pill-btn" onClick={() => save(false)} disabled={!text.trim()}>
+        <button type="button" className="pill-btn" onClick={() => save(false)} disabled={!text.trim() && !title.trim()}>
           שמור
         </button>
       </div>
 
+      <input
+        type="text"
+        className="capture-title"
+        dir="auto"
+        placeholder="כותרת (לא חובה)"
+        value={title}
+        maxLength={300}
+        enterKeyHint="next"
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            fieldRef.current?.focus()
+          }
+        }}
+      />
       <textarea
         ref={fieldRef}
         className="capture-field"

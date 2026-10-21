@@ -1773,3 +1773,23 @@ svg {
   bottom: 0;
   transform: translateY(calc(100% + 60px));
 }
+
+.capture-title {
+  display: block;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 6px 20px 0;
+  font-size: 19px;
+  font-weight: 700;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+.capture-title::placeholder {
+  color: var(--text-3);
+  font-weight: 600;
+}
+.capture-title + .capture-field {
+  padding-top: 4px;
+}
