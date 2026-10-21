@@ -29,6 +29,12 @@ Pushing to `main` builds the app and deploys it to GitHub Pages with GitHub Acti
 Schema lives in `supabase/migrations/`. Tables are prefixed `nx_` because the Supabase project is
 shared with other apps.
 
+## Accounts
+
+There is no sign-up. Users sign in with a username; `src/screens/Auth.jsx` maps it to an
+internal Supabase email (`u-<utf8 hex>@users.nexus.local`) and prefixes the password with
+`nexus:`. New accounts are created directly in Supabase Auth with those values.
+
 ## Note format
 
 Notes are plain text with a few light conventions rendered in the reading view:
