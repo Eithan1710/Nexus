@@ -21,8 +21,8 @@ npm install
 npm run dev
 ```
 
-Pushing to `main` builds and publishes `dist/` to the `gh-pages` branch
-(`.github/workflows/deploy.yml`). Pages serves that branch.
+Pushing to `main` builds the app and deploys it to GitHub Pages with GitHub Actions
+(`.github/workflows/deploy.yml`). Pages source must be set to "GitHub Actions".
 
 ## Database
 
