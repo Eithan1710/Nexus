@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react'
 import { Plus } from 'lucide-react'
-import { useStore, clearRecovery } from './store'
+import { useStore } from './store'
 import { useRoute, getDirection, savedScroll } from './router'
 import { openCapture } from './ui'
 import Home from './screens/Home'
@@ -9,7 +9,7 @@ import Item from './screens/Item'
 import Search from './screens/Search'
 import Topics from './screens/Topics'
 import Settings from './screens/Settings'
-import Auth, { NewPassword } from './screens/Auth'
+import Auth from './screens/Auth'
 import QuickCapture from './components/QuickCapture'
 import TopicEditor from './components/TopicEditor'
 import Toast from './components/Toast'
@@ -51,7 +51,7 @@ function useKeyboardInset() {
 }
 
 export default function App() {
-  const { authReady, userId, prefs, recovery, topics } = useStore()
+  const { authReady, userId, prefs, topics } = useStore()
   const route = useRoute()
   useTheme(prefs.theme)
   useKeyboardInset()
@@ -62,7 +62,6 @@ export default function App() {
   }, [route.path])
 
   if (!authReady) return <div className="boot" />
-  if (recovery && userId) return <NewPassword onDone={clearRecovery} />
   if (!userId) return <Auth />
 
   let screen

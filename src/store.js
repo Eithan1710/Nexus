@@ -10,7 +10,6 @@ const DEFAULT_PREFS = { theme: 'system', topicOrder: 'recent' }
 
 let state = {
   authReady: false,
-  recovery: false,
   userId: null,
   email: null,
   status: 'idle', // idle | loading | ready
@@ -108,7 +107,6 @@ export async function initAuth() {
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT') endSession()
     else if (session && session.user.id !== state.userId) startSession(session)
-    if (event === 'PASSWORD_RECOVERY') set({ recovery: true })
   })
 }
 
@@ -126,7 +124,7 @@ function startSession(session) {
   saveLocalPrefs(prefs)
   set({
     userId,
-    email: session.user.email,
+    email: session.user.user_metadata?.username || session.user.email,
     prefs,
     topics: cached?.topics || [],
     items: cached?.items || [],
@@ -173,9 +171,6 @@ export function toast(text, action = null, ms = 3200) {
   toastTimer = setTimeout(() => {
     if (state.toast?.id === t.id) set({ toast: null })
   }, ms)
-}
-export function clearRecovery() {
-  set({ recovery: false })
 }
 export function dismissToast() {
   set({ toast: null })

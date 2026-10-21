@@ -104,7 +104,7 @@ export default function Settings() {
       <div className="list-card">
         <div className="settings-row static">
           <span className="muted">מחובר בתור</span>
-          <span className="end" dir="ltr">
+          <span className="end" dir="auto">
             {email || 'אורח'}
           </span>
         </div>
