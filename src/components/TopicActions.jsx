@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
-import { Pin, PinOff, Pencil, Trash2 } from 'lucide-react'
+import { Pin, PinOff, Pencil, Trash2, BellPlus } from 'lucide-react'
 import Menu, { Confirm } from './Menu'
 import { useStore, updateTopic, deleteTopic } from '../store'
 import { openTopicEditor } from '../ui'
 import { countLabel } from '../lib/format'
+import { navigate } from '../router'
 
 // Topic actions shared by home tiles, the topics list and the topic screen.
 export default function useTopicActions(topic, { onDeleted } = {}) {
@@ -25,6 +26,7 @@ export default function useTopicActions(topic, { onDeleted } = {}) {
     topic.pinned
       ? { label: 'בטל נעיצה בבית', icon: PinOff, run: () => updateTopic(topic.id, { pinned: false }) }
       : { label: 'נעץ בראש הבית', icon: Pin, run: () => updateTopic(topic.id, { pinned: true }) },
+    { label: 'תזכורת לנושא הזה', icon: BellPlus, run: () => navigate(`/reminders/new/${topic.id}`) },
     { divider: true, key: 'sep' },
     { label: 'מחיקת נושא', icon: Trash2, danger: true, run: () => setConfirm(true) },
   ]

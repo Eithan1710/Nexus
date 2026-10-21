@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { dismissToast } from './store'
 
 // Global UI state for sheets that can be opened from any screen.
-let ui = { capture: null, topicEditor: null }
+let ui = { capture: null, topicEditor: null, reminderEditor: null }
 const listeners = new Set()
 const set = (patch) => {
   ui = { ...ui, ...patch }
@@ -68,4 +68,12 @@ export function focusKeyboardProxy() {
     document.body.appendChild(proxy)
   }
   proxy.focus({ preventScroll: true })
+}
+
+// Edit sheet for one reminder: { id }.
+export function openReminderEditor(id) {
+  set({ reminderEditor: { id, at: Date.now() } })
+}
+export function closeReminderEditor() {
+  set({ reminderEditor: null })
 }

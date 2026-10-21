@@ -15,6 +15,7 @@ let state = {
   status: 'idle', // idle | loading | ready
   topics: [],
   items: [],
+  reminders: [],
   pending: 0,
   online: typeof navigator === 'undefined' ? true : navigator.onLine,
   syncError: null,
@@ -67,7 +68,7 @@ function persistNow() {
   clearTimeout(saveTimer)
   if (!state.userId) return
   try {
-    localStorage.setItem(cacheKey(), JSON.stringify({ topics: state.topics, items: state.items }))
+    localStorage.setItem(cacheKey(), JSON.stringify({ topics: state.topics, items: state.items, reminders: state.reminders }))
   } catch (e) {
     console.warn('cache write failed', e)
   }
@@ -128,6 +129,7 @@ function startSession(session) {
     prefs,
     topics: cached?.topics || [],
     items: cached?.items || [],
+    reminders: cached?.reminders || [],
     status: cached ? 'ready' : 'loading',
     pending: outbox.length,
   })
@@ -138,7 +140,7 @@ function startSession(session) {
 function endSession() {
   persistNow()
   outbox = []
-  set({ userId: null, email: null, topics: [], items: [], status: 'idle', pending: 0 })
+  set({ userId: null, email: null, topics: [], items: [], reminders: [], status: 'idle', pending: 0 })
 }
 
 export async function signOut() {
@@ -202,11 +204,12 @@ export function refresh() {
   const userId = state.userId
   refreshing = (async () => {
     try {
-      const [topics, items] = await Promise.all([fetchAll('nx_topics'), fetchAll('nx_items')])
+      const [topics, items, reminders] = await Promise.all([fetchAll('nx_topics'), fetchAll('nx_items'), fetchAll('nx_reminders').catch(() => null)])
       if (state.userId !== userId) return
       set({
         topics: mergeRows(state.topics, topics, 'topic'),
         items: mergeRows(state.items, items, 'item'),
+        ...(reminders && { reminders: mergeRows(state.reminders, reminders, 'reminder') }),
         status: 'ready',
         syncError: null,
       })
@@ -315,6 +318,7 @@ function isRetryable(error, status) {
 async function send(op) {
   try {
     if (op.t === 'topic') return await sendTopic(op)
+    if (op.t === 'reminder') return await sendReminder(op)
     return await sendItem(op)
   } catch (e) {
     console.warn('send failed', e)
@@ -333,6 +337,21 @@ async function sendTopic(op) {
     if (isRetryable(res.error, res.status)) return 'retry'
     console.error('topic op rejected', op, res.error)
     toast('שינוי בנושא לא נשמר בשרת')
+  }
+  return 'ok'
+}
+
+async function sendReminder(op) {
+  const q = supabase.from('nx_reminders')
+  let res
+  if (op.op === 'insert') res = await q.upsert(op.patch)
+  else if (op.op === 'update') res = await q.update(op.patch).eq('id', op.id)
+  else res = await q.delete().eq('id', op.id)
+  if (res.error) {
+    if (res.status === 401) await supabase.auth.refreshSession().catch(() => {})
+    if (isRetryable(res.error, res.status)) return 'retry'
+    console.error('reminder op rejected', op, res.error)
+    toast('שינוי בתזכורת לא נשמר בשרת')
   }
   return 'ok'
 }
@@ -476,7 +495,12 @@ export function touchTopic(id) {
 
 export function deleteTopic(id) {
   const itemIds = new Set(state.items.filter((i) => i.topic_id === id).map((i) => i.id))
-  set({ topics: state.topics.filter((t) => t.id !== id), items: state.items.filter((i) => i.topic_id !== id) })
+  set({
+    topics: state.topics.filter((t) => t.id !== id),
+    items: state.items.filter((i) => i.topic_id !== id),
+    // Reminders outlive their topic; the server unlinks them the same way.
+    reminders: state.reminders.map((r) => (r.topic_id === id ? { ...r, topic_id: null } : r)),
+  })
   // Drop queued ops for this topic's items; the cascade removes them on the server.
   outbox = outbox.filter((op) => op === inflight || !(op.t === 'item' && itemIds.has(op.id)))
   persistSoon()
@@ -546,11 +570,77 @@ export function discardItem(id) {
   enqueue({ t: 'item', op: 'delete', id })
 }
 
+// ---------- reminders API ----------
+
+// Columns the app writes; delivery bookkeeping belongs to the server.
+const REMINDER_FIELDS = ['title', 'notes', 'topic_id', 'due_at', 'timezone', 'recurrence', 'status', 'updated_at']
+
+export function createReminder({ title, notes = '', topicId = null, dueAt, timezone, recurrence = null }) {
+  const r = {
+    id: uuid(),
+    title: title.trim().slice(0, 300),
+    notes,
+    topic_id: topicId,
+    due_at: dueAt,
+    timezone,
+    recurrence,
+    status: 'pending',
+    completed_at: null,
+    delivery_status: 'scheduled',
+    delivered_at: null,
+    last_error: null,
+    created_at: now(),
+    updated_at: now(),
+  }
+  set({ reminders: [...state.reminders, r] })
+  persistNow()
+  const row = Object.fromEntries(['id', 'created_at', ...REMINDER_FIELDS].map((k) => [k, r[k]]))
+  enqueue({ t: 'reminder', op: 'insert', id: r.id, patch: row })
+  return r
+}
+
+export function updateReminder(id, patch) {
+  const cur = state.reminders.find((r) => r.id === id)
+  if (!cur) return
+  const full = { ...patch, updated_at: now() }
+  const local = { ...full }
+  // Mirror the server: a new time or a reopened reminder is scheduled afresh.
+  if (('due_at' in patch && patch.due_at !== cur.due_at) || ('recurrence' in patch && JSON.stringify(patch.recurrence) !== JSON.stringify(cur.recurrence)) || (patch.status === 'pending' && cur.status !== 'pending')) {
+    Object.assign(local, { delivery_status: 'scheduled', last_error: null })
+  }
+  if (patch.status) local.completed_at = patch.status === 'completed' ? now() : null
+  set({ reminders: state.reminders.map((r) => (r.id === id ? { ...r, ...local } : r)) })
+  persistSoon()
+  const sendable = Object.fromEntries(Object.entries(full).filter(([k]) => REMINDER_FIELDS.includes(k)))
+  enqueue({ t: 'reminder', op: 'update', id, patch: sendable })
+}
+
+export function deleteReminder(id) {
+  const r = state.reminders.find((x) => x.id === id)
+  if (!r) return
+  set({ reminders: state.reminders.filter((x) => x.id !== id) })
+  persistNow()
+  const op = { t: 'reminder', op: 'delete', id, notBefore: Date.now() + 6000 }
+  enqueue(op)
+  toast('התזכורת נמחקה', {
+    label: 'ביטול',
+    run: () => {
+      const idx = outbox.indexOf(op)
+      if (idx < 0 || inflight === op) return toast('כבר מאוחר מדי לביטול')
+      outbox.splice(idx, 1)
+      persistOutbox()
+      set({ reminders: [...state.reminders, r] })
+      persistNow()
+    },
+  }, 6000)
+}
+
 export function exportData() {
   return {
     app: 'nexus',
     exported_at: now(),
     topics: state.topics,
     items: state.items,
+    reminders: state.reminders,
   }
 }

@@ -3,6 +3,7 @@ import { useStore, setPref, signOut, exportData, refresh, flush, toast } from '.
 import { goBack } from '../router'
 import { NavBar } from './Topic'
 import { itemTitle } from '../lib/format'
+import NotificationCard from '../components/NotificationCard'
 
 const THEMES = [
   ['system', 'מערכת', Monitor],
@@ -70,6 +71,11 @@ export default function Settings() {
         ))}
       </div>
       <p className="hint">נושאים נעוצים תמיד ראשונים. בסדר ידני אפשר לגרור ב״כל הנושאים״ ← ״סידור״.</p>
+
+      <div className="section-head small">
+        <h2>התראות לתזכורות</h2>
+      </div>
+      <NotificationCard variant="full" />
 
       <div className="section-head small">
         <h2>גיבוי</h2>

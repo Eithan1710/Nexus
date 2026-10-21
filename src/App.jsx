@@ -9,9 +9,11 @@ import Item from './screens/Item'
 import Search from './screens/Search'
 import Topics from './screens/Topics'
 import Settings from './screens/Settings'
+import Reminders from './screens/Reminders'
 import Auth from './screens/Auth'
 import QuickCapture from './components/QuickCapture'
 import TopicEditor from './components/TopicEditor'
+import ReminderEditor from './components/ReminderEditor'
 import Toast from './components/Toast'
 
 function useTheme(theme) {
@@ -87,6 +89,10 @@ export default function App() {
       screen = <Settings />
       fab = false
       break
+    case 'reminders':
+      screen = <Reminders topicId={route.topicId} reminderId={route.reminderId} />
+      fab = false
+      break
     default:
       screen = <Home />
   }
@@ -106,6 +112,7 @@ export default function App() {
       )}
       <QuickCapture />
       <TopicEditor />
+      <ReminderEditor />
       <Toast />
     </>
   )

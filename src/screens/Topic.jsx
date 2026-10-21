@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronRight, Ellipsis, Search, X, Pin, Plus, ArrowUpDown } from 'lucide-react'
+import { ChevronRight, Ellipsis, Search, X, Pin, Plus, ArrowUpDown, Bell } from 'lucide-react'
 import { useStore, touchTopic } from '../store'
 import { goBack, navigate } from '../router'
 import { openCapture } from '../ui'
@@ -11,11 +11,14 @@ import { countLabel } from '../lib/format'
 import { searchItems } from '../lib/search'
 import { colorVars } from '../lib/colors'
 import useScrolled from '../lib/useScrolled'
+import ReminderRow from '../components/ReminderRow'
+import useNow from '../lib/useNow'
 
 const SORTS = { updated: 'עודכנו לאחרונה', created: 'נוצרו לאחרונה' }
 
 export default function Topic({ id }) {
-  const { topics, items, status } = useStore()
+  const { topics, items, reminders, status } = useStore()
+  const now = useNow(30e3)
   const topic = topics.find((t) => t.id === id)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState(() => sessionStorage.getItem('nx-sort') || 'updated')
@@ -33,6 +36,7 @@ export default function Topic({ id }) {
   }, [id, !!topic])
 
   const mine = useMemo(() => items.filter((i) => i.topic_id === id), [items, id])
+  const topicReminders = useMemo(() => reminders.filter((r) => r.topic_id === id && r.status === 'pending').sort((a, b) => a.due_at.localeCompare(b.due_at)), [reminders, id])
   const topicsById = useMemo(() => new Map(topics.map((t) => [t.id, t])), [topics])
 
   const results = useMemo(() => (query.trim() ? searchItems(mine, topicsById, query) : null), [mine, topicsById, query])
@@ -80,6 +84,24 @@ export default function Topic({ id }) {
           <div className="muted">{countLabel(mine.length)}</div>
         </div>
       </header>
+
+      {topicReminders.length > 0 && (
+        <>
+          <div className="section-head small">
+            <h2>
+              <Bell size={14} /> תזכורות
+            </h2>
+            <button type="button" className="text-btn small" onClick={() => navigate(`/reminders/new/${id}`)}>
+              <Plus size={16} /> חדשה
+            </button>
+          </div>
+          <div className="list-card topic-reminders">
+            {topicReminders.map((r) => (
+              <ReminderRow key={r.id} reminder={r} now={now} showTopic={false} />
+            ))}
+          </div>
+        </>
+      )}
 
       {mine.length > 0 && (
         <div className="topic-tools">

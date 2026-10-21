@@ -7,6 +7,8 @@ import { useSyncExternalStore } from 'react'
 //   #/search          global search
 //   #/topics          all topics / manage
 //   #/settings        settings
+//   #/reminders       reminders (#/reminders/new/:topicId starts one for a topic)
+//   #/r/:id           a reminder (opened from its notification)
 
 function parse(hash) {
   const path = (hash || '').replace(/^#/, '') || '/'
@@ -16,6 +18,8 @@ function parse(hash) {
   if (parts[0] === 'search') return { name: 'search', path }
   if (parts[0] === 'topics') return { name: 'topics', path }
   if (parts[0] === 'settings') return { name: 'settings', path }
+  if (parts[0] === 'reminders') return { name: 'reminders', path, topicId: parts[1] === 'new' ? parts[2] || null : null }
+  if (parts[0] === 'r' && parts[1]) return { name: 'reminders', path, reminderId: parts[1] }
   return { name: 'home', path: '/' }
 }
 

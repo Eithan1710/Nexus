@@ -1,6 +1,6 @@
 // App-shell cache: the app opens instantly and works offline. Data goes straight to
 // Supabase (never cached here); the app keeps its own on-device copy.
-const CACHE = 'nexus-v1'
+const CACHE = 'nexus-v2'
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png']
 
 self.addEventListener('install', (e) => {
@@ -59,5 +59,67 @@ self.addEventListener('fetch', (e) => {
           return res
         }),
     ),
+  )
+})
+
+// ---------- reminders: Web Push ----------
+// The server sends { title, body, tag, url, id }. Shown even when no Nexus tab is open.
+
+const PUSH_FN = 'https://kjfihzskaqcboeejnkak.supabase.co/functions/v1/nx-reminders'
+
+self.addEventListener('push', (e) => {
+  let data = {}
+  try {
+    data = e.data ? e.data.json() : {}
+  } catch {
+    data = { body: e.data ? e.data.text() : '' }
+  }
+  const show = self.registration.showNotification(data.title || 'תזכורת', {
+    body: data.body || '',
+    tag: data.tag || 'nx-reminder',
+    renotify: true,
+    lang: 'he',
+    dir: 'rtl',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    timestamp: data.ts || Date.now(),
+    data: { url: data.url || './', id: data.id || null },
+  })
+  // Let an open app refresh its list right away.
+  const tell = self.clients.matchAll({ type: 'window' }).then((cs) => cs.forEach((c) => c.postMessage({ type: 'nx-push', id: data.id || null })))
+  e.waitUntil(Promise.all([show, tell]))
+})
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const url = new URL(e.notification.data?.url || './', self.registration.scope).href
+  e.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      const app = windows.find((c) => c.url.startsWith(self.registration.scope))
+      if (app) {
+        await app.focus()
+        app.postMessage({ type: 'nx-open', url })
+        return
+      }
+      await self.clients.openWindow(url)
+    })(),
+  )
+})
+
+// The browser rotated the subscription: register the new one in place of the old.
+self.addEventListener('pushsubscriptionchange', (e) => {
+  e.waitUntil(
+    (async () => {
+      const old = e.oldSubscription
+      const key = old?.options?.applicationServerKey
+      const sub = e.newSubscription || (key && (await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key })))
+      if (!old || !sub) return
+      await fetch(PUSH_FN, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'resubscribe', oldEndpoint: old.endpoint, subscription: sub.toJSON() }),
+      })
+    })(),
   )
 })

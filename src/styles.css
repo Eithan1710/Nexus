@@ -2001,3 +2001,550 @@ svg {
   font-weight: 600;
   color: var(--text-3);
 }
+
+/* ---------- reminders ---------- */
+.reminder-peek {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  text-align: start;
+}
+.reminder-peek-icon,
+.next-up-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.reminder-peek.quiet .reminder-peek-icon {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.reminder-peek-text,
+.next-up-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.reminder-peek-title,
+.next-up-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reminder-peek .chev {
+  color: var(--text-3);
+}
+.late-badge {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.composer {
+  margin-top: 6px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  padding: 6px;
+}
+.composer-input {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.composer-input textarea {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  padding: 11px 10px;
+  font-size: 17px;
+  line-height: 1.45;
+  min-height: 48px;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+.composer-input textarea::placeholder {
+  color: var(--text-3);
+}
+.composer-go {
+  width: 40px;
+  height: 40px;
+  margin: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.composer-go:disabled {
+  opacity: 0.3;
+}
+.composer-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 8px;
+  font-size: 14px;
+  color: var(--accent);
+}
+.composer-hint svg {
+  flex-shrink: 0;
+}
+.composer-confirm {
+  border-top: 1px solid var(--line);
+  margin-top: 2px;
+  padding: 12px 8px 4px;
+}
+.composer-cancel {
+  width: 100%;
+}
+
+/* confirmation / edit form */
+.rf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rf-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 15.5px;
+  line-height: 1.4;
+}
+.rf-summary b {
+  font-weight: 700;
+}
+.rf-summary span {
+  color: var(--text);
+}
+.rf-summary .muted {
+  color: var(--text-2);
+}
+.rf-summary.pending {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.rf-summary.bad {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+.rf-summary.bad span {
+  color: var(--danger);
+}
+.rf-repeat {
+  color: var(--text-2) !important;
+}
+.rf-title {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  font-size: 17px;
+  font-weight: 600;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+.rf-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  font-weight: 600;
+}
+.rf-ask-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rf-ask-options .example-chip {
+  color: var(--text);
+  font-weight: 500;
+  background: var(--surface-2);
+  box-shadow: none;
+  min-height: 38px;
+}
+.rf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.rf-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text-2);
+  min-width: 0;
+  border: 1.5px solid transparent;
+}
+.rf-field.need {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.rf-field.approx {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.rf-field input,
+.rf-field select {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  padding: 0;
+  height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rf-field input[type='date'],
+.rf-field input[type='time'] {
+  min-width: 0;
+  width: 100%;
+}
+.rf-field input::-webkit-date-and-time-value {
+  text-align: start;
+}
+.rf-days {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+.rf-day {
+  flex: 1;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.rf-day.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.rf-notes {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  resize: vertical;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-size: 16px;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+.rf-add-notes {
+  align-self: flex-start;
+  color: var(--text-2);
+  min-height: 34px;
+}
+.rf-note {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: -4px 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.rf-save {
+  margin-top: 4px;
+}
+.rf-save:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+/* lists */
+.next-up {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent-soft), transparent 70%), var(--surface);
+  box-shadow: var(--shadow-1);
+  text-align: start;
+}
+.next-up .eyebrow {
+  margin: 0;
+}
+.next-up-title {
+  font-size: 18px;
+}
+.section-head.small.late h2 {
+  color: var(--danger);
+}
+.reminder-row {
+  display: flex;
+  align-items: stretch;
+}
+.rr-check {
+  flex-shrink: 0;
+  width: 50px;
+  display: flex;
+  justify-content: center;
+  padding-top: 15px;
+}
+.rr-check .checkbox {
+  margin: 0;
+}
+.reminder-row.overdue .rr-check .checkbox {
+  border-color: var(--danger);
+}
+.reminder-row.done .checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.rr-main {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 0 13px;
+  text-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rr-title {
+  font-weight: 600;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.reminder-row.done .rr-title {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+.rr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.rr-when.late {
+  color: var(--danger);
+  font-weight: 600;
+}
+.rr-when .muted {
+  font-weight: 400;
+}
+.rr-tag,
+.rr-warn,
+.rr-topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.rr-topic {
+  color: var(--tc);
+  font-weight: 500;
+  cursor: pointer;
+}
+.rr-warn {
+  color: var(--danger);
+  font-weight: 600;
+}
+.rr-warn.soft {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.reminder-row .row-more {
+  margin-top: 8px;
+}
+.section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 22px 0 8px;
+  padding: 0 4px;
+  min-height: 40px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.section-toggle .count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.section-toggle .flip {
+  transform: rotate(180deg);
+}
+.reminders-empty {
+  padding-top: 36px;
+}
+.reminders-empty .examples {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* edit sheet */
+.reminder-sheet-body {
+  padding: 4px 16px calc(16px + var(--safe-bottom));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rs-quick {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rs-btn {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-weight: 600;
+  font-size: 14.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rs-btn.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  flex: 1 1 100%;
+  justify-content: center;
+}
+.rs-topic {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-weight: 500;
+  min-height: 36px;
+}
+.text-btn.inline {
+  min-height: 0;
+  font-size: 13px;
+}
+
+/* notification status */
+.notif-card {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-screen .notif-card {
+  margin-top: 0;
+}
+.nc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.nc-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.nc-row.ok .nc-icon {
+  background: color-mix(in srgb, #1f9d55 15%, transparent);
+  color: #1f9d55;
+}
+.nc-row.warn .nc-icon {
+  background: color-mix(in srgb, #d98e04 16%, transparent);
+  color: #c27c00;
+}
+.nc-row.bad .nc-icon {
+  background: color-mix(in srgb, var(--danger) 13%, transparent);
+  color: var(--danger);
+}
+.nc-text {
+  flex: 1;
+  min-width: 0;
+}
+.nc-title {
+  font-weight: 600;
+}
+.nc-sub {
+  font-size: 14px;
+  color: var(--text-2);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+.nc-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.nc-actions .primary-btn {
+  min-height: 46px;
+  font-size: 15.5px;
+  flex: 1;
+}
+.nc-steps {
+  margin: 0;
+  padding-inline-start: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+}
+.nc-steps .inline-icon {
+  vertical-align: -2px;
+  color: var(--accent);
+}
+.notif-card .hint {
+  margin: 0;
+}
+.topic-reminders {
+  margin-bottom: 4px;
+}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Search, Plus, Settings, ChevronLeft, CloudOff, Sparkles, Pin, Ellipsis } from 'lucide-react'
+import { Search, Plus, Settings, ChevronLeft, CloudOff, Sparkles, Pin, Ellipsis, Bell, BellRing } from 'lucide-react'
 import { useStore } from '../store'
 import { navigate } from '../router'
 import { openTopicEditor, focusKeyboardProxy } from '../ui'
@@ -8,9 +8,11 @@ import useTopicActions from '../components/TopicActions'
 import { greeting, timeAgo, countLabel } from '../lib/format'
 import { topicStats, sortTopics, hasNews } from '../lib/topics'
 import { colorVars } from '../lib/colors'
+import { whenLabel, relativeHint } from '../lib/reminderFormat'
+import useNow from '../lib/useNow'
 
 export default function Home() {
-  const { topics, items, prefs, status, online, pending } = useStore()
+  const { topics, items, reminders, prefs, status, online, pending } = useStore()
   const stats = useMemo(() => topicStats(items), [items])
   const ordered = useMemo(() => sortTopics(topics, stats, prefs.topicOrder), [topics, stats, prefs.topicOrder])
 
@@ -27,6 +29,9 @@ export default function Home() {
               {online ? <span className="spinner" /> : <CloudOff size={16} />}
             </span>
           )}
+          <button type="button" className="icon-btn" aria-label="תזכורות" onClick={() => navigate('/reminders')}>
+            <Bell size={22} />
+          </button>
           <button type="button" className="icon-btn" aria-label="הגדרות" onClick={() => navigate('/settings')}>
             <Settings size={22} />
           </button>
@@ -41,6 +46,8 @@ export default function Home() {
         <Search size={18} />
         <span>חיפוש בידע שלי</span>
       </button>
+
+      <ReminderPeek reminders={reminders} />
 
       {status === 'loading' && !topics.length ? (
         <div className="topic-grid">
@@ -74,6 +81,38 @@ export default function Home() {
         </>
       )}
     </div>
+  )
+}
+
+// The next reminder (and anything overdue), one tap from the reminders screen.
+function ReminderPeek({ reminders }) {
+  const now = useNow(30e3)
+  const pending = reminders.filter((r) => r.status === 'pending')
+  const overdue = pending.filter((r) => !r.recurrence && Date.parse(r.due_at) <= now).length
+  const next = pending.filter((r) => Date.parse(r.due_at) > now).sort((a, b) => a.due_at.localeCompare(b.due_at))[0]
+  return (
+    <button type="button" className={'reminder-peek' + (next || overdue ? '' : ' quiet')} onClick={() => navigate('/reminders')}>
+      <span className="reminder-peek-icon">
+        <BellRing size={18} />
+      </span>
+      {next ? (
+        <span className="reminder-peek-text">
+          <span className="reminder-peek-title" dir="auto">
+            {next.title}
+          </span>
+          <span className="muted small">
+            {whenLabel(Date.parse(next.due_at), next.timezone, now)} · {relativeHint(Date.parse(next.due_at), now)}
+          </span>
+        </span>
+      ) : (
+        <span className="reminder-peek-text">
+          <span className="reminder-peek-title">{overdue ? 'תזכורות' : 'תזכורת חדשה'}</span>
+          <span className="muted small">{overdue ? 'אין תזכורות קרובות' : 'כתוב מה להזכיר לך, ומתי'}</span>
+        </span>
+      )}
+      {overdue > 0 && <span className="late-badge">{overdue} באיחור</span>}
+      <ChevronLeft size={18} className="chev" />
+    </button>
   )
 }
 
