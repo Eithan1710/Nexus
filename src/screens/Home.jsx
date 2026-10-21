@@ -4,25 +4,15 @@ import { useStore } from '../store'
 import { navigate } from '../router'
 import { openTopicEditor, focusKeyboardProxy } from '../ui'
 import TopicIcon from '../components/TopicIcon'
-import ItemRow from '../components/ItemRow'
 import useTopicActions from '../components/TopicActions'
 import { greeting, timeAgo, countLabel } from '../lib/format'
 import { topicStats, sortTopics, hasNews } from '../lib/topics'
 import { colorVars } from '../lib/colors'
 
-const GRID_LIMIT = 8
-
 export default function Home() {
   const { topics, items, prefs, status, online, pending } = useStore()
   const stats = useMemo(() => topicStats(items), [items])
   const ordered = useMemo(() => sortTopics(topics, stats, prefs.topicOrder), [topics, stats, prefs.topicOrder])
-  const topicsById = useMemo(() => new Map(topics.map((t) => [t.id, t])), [topics])
-  const recent = useMemo(
-    () => [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 5),
-    [items],
-  )
-  const grid = ordered.slice(0, GRID_LIMIT)
-  const rest = ordered.length - grid.length
 
   return (
     <div className="screen home">
@@ -63,41 +53,23 @@ export default function Home() {
       ) : (
         <>
           <div className="section-head">
-            <h2>הנושאים שלי</h2>
+            <h2>
+              הנושאים שלי <span className="count">{topics.length}</span>
+            </h2>
             <button type="button" className="text-btn" onClick={() => openTopicEditor()}>
               <Plus size={18} /> נושא חדש
             </button>
           </div>
           <div className="topic-grid">
-            {grid.map((t) => (
+            {ordered.map((t) => (
               <TopicTile key={t.id} topic={t} stat={stats.get(t.id)} />
             ))}
           </div>
-          {rest > 0 && (
-            <button type="button" className="all-topics-row" onClick={() => navigate('/topics')}>
-              <span>כל הנושאים</span>
-              <span className="muted">{ordered.length}</span>
-              <ChevronLeft size={18} className="chev" />
-            </button>
-          )}
-          {rest <= 0 && topics.length > 1 && (
+          {topics.length > 1 && (
             <button type="button" className="all-topics-row subtle" onClick={() => navigate('/topics')}>
-              <span>סידור וניהול נושאים</span>
+              <span>סידור נושאים</span>
               <ChevronLeft size={18} className="chev" />
             </button>
-          )}
-
-          {recent.length > 0 && (
-            <>
-              <div className="section-head">
-                <h2>נוספו לאחרונה</h2>
-              </div>
-              <div className="list-card">
-                {recent.map((it) => (
-                  <ItemRow key={it.id} item={it} topic={topicsById.get(it.topic_id)} showTopic />
-                ))}
-              </div>
-            </>
           )}
         </>
       )}

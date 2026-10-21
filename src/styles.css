@@ -1995,3 +1995,9 @@ svg {
     margin-inline: 28px;
   }
 }
+
+.section-head h2 .count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-3);
+}
