@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight, Ellipsis, Search, X, Pin, PinOff, Pencil, Trash2, Plus, ArrowUpDown } from 'lucide-react'
-import { useStore, touchTopic, updateTopic, deleteTopic } from '../store'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ChevronRight, Ellipsis, Search, X, Pin, Plus, ArrowUpDown } from 'lucide-react'
+import { useStore, touchTopic } from '../store'
 import { goBack, navigate } from '../router'
-import { openCapture, openTopicEditor } from '../ui'
+import { openCapture } from '../ui'
 import TopicIcon from '../components/TopicIcon'
 import ItemRow from '../components/ItemRow'
-import Menu, { Confirm } from '../components/Menu'
+import Menu from '../components/Menu'
+import useTopicActions from '../components/TopicActions'
 import { countLabel } from '../lib/format'
 import { searchItems } from '../lib/search'
 import { colorVars } from '../lib/colors'
@@ -18,9 +19,9 @@ export default function Topic({ id }) {
   const topic = topics.find((t) => t.id === id)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState(() => sessionStorage.getItem('nx-sort') || 'updated')
-  const [menu, setMenu] = useState(false)
-  const [sortMenu, setSortMenu] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [sortAnchor, setSortAnchor] = useState(null)
+  const closeSort = useCallback(() => setSortAnchor(null), [])
+  const actions = useTopicActions(topic, { onDeleted: () => navigate('/', { replace: true }) })
   const scrolled = useScrolled(60)
 
   // Mark as opened on enter and on leave, so things saved while here don't count as news.
@@ -66,7 +67,7 @@ export default function Topic({ id }) {
         onBack={() => goBack('/')}
         title={scrolled ? topic.name : ''}
         right={
-          <button type="button" className="icon-btn" aria-label="אפשרויות נושא" onClick={() => setMenu(true)}>
+          <button type="button" className="icon-btn" aria-label="אפשרויות נושא" aria-haspopup="menu" onClick={actions.open}>
             <Ellipsis size={22} />
           </button>
         }
@@ -98,7 +99,7 @@ export default function Topic({ id }) {
               </button>
             )}
           </label>
-          <button type="button" className="icon-btn soft" aria-label={`מיון: ${SORTS[sort]}`} onClick={() => setSortMenu(true)}>
+          <button type="button" className="icon-btn soft" aria-label={`מיון: ${SORTS[sort]}`} aria-haspopup="menu" onClick={(e) => setSortAnchor(e.currentTarget.getBoundingClientRect())}>
             <ArrowUpDown size={19} />
           </button>
         </div>
@@ -161,40 +162,19 @@ export default function Topic({ id }) {
         </>
       )}
 
+      {actions.elements}
       <Menu
-        open={menu}
-        onClose={() => setMenu(false)}
-        title={topic.name}
-        actions={[
-          { label: 'עריכת שם, סמל וצבע', icon: Pencil, run: () => openTopicEditor({ topic }) },
-          topic.pinned
-            ? { label: 'בטל נעיצה בבית', icon: PinOff, run: () => updateTopic(topic.id, { pinned: false }) }
-            : { label: 'נעץ בראש הבית', icon: Pin, run: () => updateTopic(topic.id, { pinned: true }) },
-          { label: 'מחק נושא', icon: Trash2, danger: true, run: () => setConfirmDelete(true) },
-        ]}
-      />
-      <Menu
-        open={sortMenu}
-        onClose={() => setSortMenu(false)}
+        anchor={sortAnchor}
+        onClose={closeSort}
         title="מיון"
         actions={Object.entries(SORTS).map(([k, label]) => ({
-          label: (k === sort ? '✓ ' : '') + label,
+          label,
+          checked: k === sort,
           run: () => {
             setSort(k)
             sessionStorage.setItem('nx-sort', k)
           },
         }))}
-      />
-      <Confirm
-        open={confirmDelete}
-        title={`למחוק את ״${topic.name}״?`}
-        body={mine.length ? `${countLabel(mine.length)} יימחקו לצמיתות יחד עם הנושא. אפשר לייצא גיבוי בהגדרות.` : 'הנושא ריק ויימחק.'}
-        confirmLabel="מחק"
-        onClose={() => setConfirmDelete(false)}
-        onConfirm={() => {
-          navigate('/', { replace: true })
-          deleteTopic(topic.id)
-        }}
       />
     </div>
   )

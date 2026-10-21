@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
-import { GripVertical, Pin, Plus, Search, X, ChevronLeft } from 'lucide-react'
+import { GripVertical, Pin, Plus, Search, X, Ellipsis } from 'lucide-react'
 import { useStore, updateTopic, reorderTopics, setPref } from '../store'
 import { goBack, navigate } from '../router'
 import { openTopicEditor } from '../ui'
 import { NavBar } from './Topic'
 import TopicIcon from '../components/TopicIcon'
+import useTopicActions from '../components/TopicActions'
 import { countLabel, timeAgo } from '../lib/format'
 import { topicStats, sortTopics } from '../lib/topics'
 import { normalize } from '../lib/search'
@@ -84,7 +85,7 @@ export default function Topics() {
                   >
                     <Pin size={18} fill={t.pinned ? 'currentColor' : 'none'} />
                   </button>
-                  <ChevronLeft size={18} className="chev" />
+                  <TopicRowMore topic={t} />
                 </div>
               )
             })}
@@ -189,6 +190,18 @@ function Reorder({ topics }) {
           )
         })}
       </div>
+    </>
+  )
+}
+
+function TopicRowMore({ topic }) {
+  const actions = useTopicActions(topic)
+  return (
+    <>
+      <button type="button" className="icon-btn" aria-label={`פעולות עבור ${topic.name}`} aria-haspopup="menu" onClick={actions.open}>
+        <Ellipsis size={20} />
+      </button>
+      {actions.elements}
     </>
   )
 }

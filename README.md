@@ -38,5 +38,5 @@ internal Supabase email (`u-<utf8 hex>@users.nexus.local`) and prefixes the pass
 ## Note format
 
 Notes are plain text with a few light conventions rendered in the reading view:
-`- [ ]` checklist (tap to tick), `- ` bullets, `1. ` numbered, `## ` heading, `**bold**`,
+`- [ ]` checklist (tap to tick; ticked items are saved as `- [✓]`, which keeps Hebrew lines right-to-left while editing; `[x]` is also accepted), `- ` bullets, `1. ` numbered, `## ` heading, `**bold**`,
 `` `code` ``, ``` fences, `> ` quote, and URLs become links.

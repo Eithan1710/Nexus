@@ -1,27 +1,22 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { Pin, PinOff, Pencil, Ellipsis, FolderInput, Trash2, Copy, ListChecks, List, Heading, Bold, Code, Check, Search, X, ChevronDown } from 'lucide-react'
-import { useStore, updateItem, deleteItem, discardItem, toast } from '../store'
+import { Pin, Ellipsis, ListChecks, List, Heading, Bold, Code, Check, ChevronDown } from 'lucide-react'
+import { useStore, updateItem, discardItem, toast } from '../store'
 import { goBack, navigate } from '../router'
 import { NavBar } from './Topic'
 import TopicIcon from '../components/TopicIcon'
 import ContentView, { toggleCheckLine } from '../components/ContentView'
-import Menu from '../components/Menu'
-import Sheet from '../components/Sheet'
+import useItemActions from '../components/ItemActions'
 import { timeAgo, fullDate } from '../lib/format'
-import { normalize } from '../lib/search'
-import { sortTopics, topicStats } from '../lib/topics'
 
-export default function Item({ id, isNew }) {
+export default function Item({ id, isNew, startEditing: startInEdit }) {
   const { items, topics, status, pending, online } = useStore()
   const item = items.find((i) => i.id === id)
   const topic = item && topics.find((t) => t.id === item.topic_id)
 
   const [title, setTitle] = useState(item?.title || '')
   const [content, setContent] = useState(item?.content || '')
-  const [editing, setEditing] = useState(isNew || (item && !item.content && !item.title))
-  const [menu, setMenu] = useState(false)
-  const [moving, setMoving] = useState(false)
+  const [editing, setEditing] = useState(isNew || startInEdit || (item && !item.content && !item.title))
   const [savedFlash, setSavedFlash] = useState(false)
   const dirty = useRef(false)
   const timer = useRef(null)
@@ -70,8 +65,19 @@ export default function Item({ id, isNew }) {
     }
   }, [id, commit])
 
+  const editRef = useRef(null)
+  const actions = useItemActions(item, {
+    onEdit: () => editRef.current?.(),
+    onBeforeChange: () => commit(),
+    onDeleted: () => {
+      dirty.current = false
+      latest.current = { title: 'x', content: '' } // prevent discard-on-leave
+      goBack(topic ? `/t/${topic.id}` : '/')
+    },
+  })
+
   useLayoutEffect(() => {
-    if (isNew && item) requestAnimationFrame(() => bodyRef.current?.focus())
+    if ((isNew || startInEdit) && item) requestAnimationFrame(() => bodyRef.current?.focus())
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useLayoutEffect(() => {
@@ -110,6 +116,8 @@ export default function Item({ id, isNew }) {
     })
   }
 
+  editRef.current = startEditing
+
   const finish = () => {
     commit()
     setEditing(false)
@@ -134,7 +142,7 @@ export default function Item({ id, isNew }) {
         backLabel={topic ? `חזרה ל${topic.name}` : 'חזרה'}
         title={
           topic && (
-            <button type="button" className="crumb" onClick={() => setMoving(true)} aria-label={`נושא: ${topic.name}. לחץ להעברה`}>
+            <button type="button" className="crumb" onClick={actions.startMove} aria-label={`נושא: ${topic.name}. לחץ להעברה`}>
               <TopicIcon topic={topic} size={22} radius={7} />
               <span>{topic.name}</span>
               <ChevronDown size={14} />
@@ -160,7 +168,7 @@ export default function Item({ id, isNew }) {
               >
                 {item.pinned ? <Pin size={21} fill="currentColor" /> : <Pin size={21} />}
               </button>
-              <button type="button" className="icon-btn" aria-label="אפשרויות" onClick={() => setMenu(true)}>
+              <button type="button" className="icon-btn" aria-label="אפשרויות" onClick={actions.open}>
                 <Ellipsis size={22} />
               </button>
             </>
@@ -230,52 +238,7 @@ export default function Item({ id, isNew }) {
 
       {editing && <FormatBar target={bodyRef} onChange={(v) => change({ content: v })} />}
 
-      <Menu
-        open={menu}
-        onClose={() => setMenu(false)}
-        actions={[
-          { label: 'ערוך', icon: Pencil, run: () => startEditing() },
-          { label: 'העבר לנושא', icon: FolderInput, run: () => setMoving(true) },
-          {
-            label: 'העתק טקסט',
-            icon: Copy,
-            run: () => {
-              const text = [title, content].filter((s) => s.trim()).join('\n\n')
-              navigator.clipboard?.writeText(text).then(
-                () => toast('הועתק'),
-                () => toast('לא ניתן להעתיק'),
-              )
-            },
-          },
-          item.pinned
-            ? { label: 'בטל נעיצה', icon: PinOff, run: () => updateItem(id, { pinned: false }) }
-            : { label: 'נעץ', icon: Pin, run: () => updateItem(id, { pinned: true }) },
-          {
-            label: 'מחק',
-            icon: Trash2,
-            danger: true,
-            run: () => {
-              dirty.current = false
-              latest.current = { title: 'x', content: '' } // prevent discard-on-leave
-              deleteItem(id)
-              goBack(topic ? `/t/${topic.id}` : '/')
-            },
-          },
-        ]}
-      />
-      <MoveSheet
-        open={moving}
-        onClose={() => setMoving(false)}
-        currentId={item.topic_id}
-        onPick={(tid) => {
-          setMoving(false)
-          if (tid === item.topic_id) return
-          commit()
-          updateItem(id, { topic_id: tid })
-          const t = topics.find((x) => x.id === tid)
-          toast(`הועבר ל״${t?.name}״`)
-        }}
-      />
+      {actions.elements}
     </div>
   )
 }
@@ -288,7 +251,7 @@ function handleListEnter(e, set) {
   if (s !== end) return
   const lineStart = value.lastIndexOf('\n', s - 1) + 1
   const line = value.slice(lineStart, s)
-  const m = line.match(/^(\s*)([-*•]\s+\[[ xX]\]\s|[-*•]\s|(\d+)[.)]\s)/)
+  const m = line.match(/^(\s*)([-*•]\s+\[[ xX✓]\]\s|[-*•]\s|(\d+)[.)]\s)/)
   if (!m) return
   e.preventDefault()
   if (line.trim() === m[0].trim()) {
@@ -299,7 +262,7 @@ function handleListEnter(e, set) {
   }
   let prefix = m[1] + m[2]
   if (m[3]) prefix = m[1] + (Number(m[3]) + 1) + m[2].slice(m[3].length)
-  prefix = prefix.replace(/\[[xX]\]/, '[ ]')
+  prefix = prefix.replace(/\[[xX✓]\]/, '[ ]')
   const v = value.slice(0, s) + '\n' + prefix + value.slice(s)
   flushSync(() => set(v))
   const pos = s + 1 + prefix.length
@@ -321,7 +284,7 @@ function FormatBar({ target, onChange }) {
       next = line.slice(existing[0].length)
       delta = -existing[0].length
     } else {
-      const stripped = line.replace(/^([-*•]\s+\[[ xX]\]\s|[-*•]\s|#{1,3}\s)/, '')
+      const stripped = line.replace(/^([-*•]\s+\[[ xX✓]\]\s|[-*•]\s|#{1,3}\s)/, '')
       next = prefix + stripped
       delta = next.length - line.length
     }
@@ -345,7 +308,7 @@ function FormatBar({ target, onChange }) {
   const keep = (e) => e.preventDefault()
   return (
     <div className="format-bar" role="toolbar" aria-label="עיצוב טקסט" onPointerDown={keep} onMouseDown={keep}>
-      <button type="button" aria-label="רשימת משימות" onClick={() => linePrefix('- [ ] ', /^[-*•]\s+\[[ xX]\]\s/)}>
+      <button type="button" aria-label="רשימת משימות" onClick={() => linePrefix('- [ ] ', /^[-*•]\s+\[[ xX✓]\]\s/)}>
         <ListChecks size={21} />
       </button>
       <button type="button" aria-label="רשימה" onClick={() => linePrefix('- ', /^[-*•]\s(?!\[)/)}>
@@ -361,49 +324,5 @@ function FormatBar({ target, onChange }) {
         <Code size={21} />
       </button>
     </div>
-  )
-}
-
-export function MoveSheet({ open, onClose, currentId, onPick }) {
-  const { topics, items } = useStore()
-  const [q, setQ] = useState('')
-  const list = useMemo(() => {
-    const sorted = sortTopics(topics, topicStats(items), 'recent')
-    const n = normalize(q.trim())
-    return n ? sorted.filter((t) => normalize(t.name).includes(n)) : sorted
-  }, [topics, items, q])
-  useEffect(() => {
-    if (open) setQ('')
-  }, [open])
-  return (
-    <Sheet open={open} onClose={onClose} label="העבר לנושא" className="move-sheet">
-      <div className="sheet-head">
-        <button type="button" className="text-btn" onClick={onClose}>
-          ביטול
-        </button>
-        <div className="sheet-title">העבר לנושא</div>
-        <span className="sheet-head-spacer" />
-      </div>
-      {topics.length > 6 && (
-        <label className="search-field in-sheet">
-          <Search size={17} />
-          <input type="search" dir="auto" placeholder="חיפוש נושא" value={q} onChange={(e) => setQ(e.target.value)} />
-          {q && (
-            <button type="button" className="icon-btn tiny" aria-label="נקה" onClick={() => setQ('')}>
-              <X size={14} />
-            </button>
-          )}
-        </label>
-      )}
-      <div className="move-list">
-        {list.map((t) => (
-          <button key={t.id} type="button" className={'move-row' + (t.id === currentId ? ' current' : '')} onClick={() => onPick(t.id)}>
-            <TopicIcon topic={t} size={34} />
-            <span dir="auto">{t.name}</span>
-            {t.id === currentId && <Check size={18} className="check" />}
-          </button>
-        ))}
-      </div>
-    </Sheet>
   )
 }

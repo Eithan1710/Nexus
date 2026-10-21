@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 // Bottom sheet that stays mounted (so inputs inside can be focused synchronously from a tap,
 // which iOS requires to raise the keyboard) and slides above the keyboard.
@@ -33,7 +34,7 @@ export default function Sheet({ open, onClose, children, label, className = '' }
     setDrag(0)
   }
 
-  return (
+  return createPortal(
     <div className={'sheet-layer' + (open ? ' open' : '')} aria-hidden={!open}>
       <div className="sheet-backdrop" onClick={onClose} />
       <div
@@ -50,6 +51,7 @@ export default function Sheet({ open, onClose, children, label, className = '' }
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

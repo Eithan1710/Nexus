@@ -73,7 +73,7 @@ export default function App() {
       fabTopic = route.id
       break
     case 'item':
-      screen = <Item key={route.id} id={route.id} isNew={route.isNew} />
+      screen = <Item key={route.id} id={route.id} isNew={route.isNew} startEditing={route.edit} />
       fab = false
       break
     case 'search':
@@ -93,7 +93,7 @@ export default function App() {
 
   return (
     <>
-      <main key={route.path} className={'page anim-' + getDirection()}>
+      <main key={route.path} className={'page anim-' + getDirection() + (route.name === 'home' || route.name === 'topics' ? ' wide' : '')}>
         {screen}
       </main>
       {fab && topics.length > 0 && (

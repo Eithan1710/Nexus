@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
-import { Search, Plus, Settings, ChevronLeft, CloudOff, Sparkles, Pin } from 'lucide-react'
+import { Search, Plus, Settings, ChevronLeft, CloudOff, Sparkles, Pin, Ellipsis } from 'lucide-react'
 import { useStore } from '../store'
 import { navigate } from '../router'
 import { openTopicEditor, focusKeyboardProxy } from '../ui'
 import TopicIcon from '../components/TopicIcon'
 import ItemRow from '../components/ItemRow'
+import useTopicActions from '../components/TopicActions'
 import { greeting, timeAgo, countLabel } from '../lib/format'
 import { topicStats, sortTopics, hasNews } from '../lib/topics'
 import { colorVars } from '../lib/colors'
@@ -68,26 +69,9 @@ export default function Home() {
             </button>
           </div>
           <div className="topic-grid">
-            {grid.map((t) => {
-              const s = stats.get(t.id)
-              const news = hasNews(t, s)
-              return (
-                <button key={t.id} type="button" className="topic-tile" style={colorVars(t.color)} onClick={() => navigate(`/t/${t.id}`)}>
-                  <div className="tile-top">
-                    <TopicIcon topic={t} size={40} />
-                    {t.pinned ? <Pin size={14} className="tile-pin" aria-label="נעוץ" /> : null}
-                    {news && <span className="news-dot" aria-label="יש חדש" />}
-                  </div>
-                  <div className="tile-name" dir="auto">
-                    {t.name}
-                  </div>
-                  <div className="tile-meta">
-                    {countLabel(s?.count || 0)}
-                    {s?.lastUpdate && <> · {timeAgo(s.lastUpdate)}</>}
-                  </div>
-                </button>
-              )
-            })}
+            {grid.map((t) => (
+              <TopicTile key={t.id} topic={t} stat={stats.get(t.id)} />
+            ))}
           </div>
           {rest > 0 && (
             <button type="button" className="all-topics-row" onClick={() => navigate('/topics')}>
@@ -139,6 +123,33 @@ function EmptyHome() {
           </button>
         ))}
       </div>
+    </div>
+  )
+}
+
+function TopicTile({ topic: t, stat: s }) {
+  const actions = useTopicActions(t)
+  return (
+    <div className="topic-tile" style={colorVars(t.color)}>
+      <button type="button" className="tile-hit" onClick={() => navigate(`/t/${t.id}`)} aria-label={t.name} />
+      <div className="tile-top">
+        <TopicIcon topic={t} size={40} />
+        <span className="tile-badges">
+          {hasNews(t, s) && <span className="news-dot" aria-label="יש חדש" />}
+          {t.pinned && <Pin size={14} className="tile-pin" aria-label="נעוץ" />}
+        </span>
+        <button type="button" className="tile-more" aria-label={`פעולות עבור ${t.name}`} aria-haspopup="menu" onClick={actions.open}>
+          <Ellipsis size={18} />
+        </button>
+      </div>
+      <div className="tile-name" dir="auto">
+        {t.name}
+      </div>
+      <div className="tile-meta">
+        {countLabel(s?.count || 0)}
+        {s?.lastUpdate && <> · {timeAgo(s.lastUpdate)}</>}
+      </div>
+      {actions.elements}
     </div>
   )
 }

@@ -50,7 +50,7 @@ export function itemPreview(item) {
 export function stripMarks(s) {
   return s
     .replace(/^#{1,3}\s+/, '')
-    .replace(/^[-*•]\s+\[( |x|X)\]\s+/, '')
+    .replace(/^[-*•]\s+\[( |x|X|✓)\]\s+/, '')
     .replace(/^[-*•]\s+/, '')
     .replace(/^>\s?/, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')

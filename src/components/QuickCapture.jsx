@@ -61,12 +61,6 @@ export default function QuickCapture() {
   useEffect(() => saveDraft(DRAFT_KEY, text), [text])
   useEffect(() => saveDraft(TITLE_KEY, title), [title])
 
-  useEffect(() => {
-    const el = fieldRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.4) + 'px'
-  }, [text, open])
 
   const ordered = useMemo(() => {
     const stats = topicStats(items)
@@ -132,38 +126,40 @@ export default function QuickCapture() {
         </button>
       </div>
 
-      <input
-        type="text"
-        className="capture-title"
-        dir="auto"
-        placeholder="כותרת (לא חובה)"
-        value={title}
-        maxLength={300}
-        enterKeyHint="next"
-        onChange={(e) => setTitle(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            fieldRef.current?.focus()
-          }
-        }}
-      />
-      <textarea
-        ref={fieldRef}
-        className="capture-field"
-        dir="auto"
-        placeholder="מה עובר לך בראש?"
-        value={text}
-        rows={3}
-        enterKeyHint="enter"
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault()
-            save(false)
-          }
-        }}
-      />
+      <div className="capture-body">
+        <input
+          type="text"
+          className="capture-title"
+          dir="auto"
+          placeholder="כותרת (לא חובה)"
+          value={title}
+          maxLength={300}
+          enterKeyHint="next"
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              fieldRef.current?.focus()
+            }
+          }}
+        />
+        <textarea
+          ref={fieldRef}
+          className="capture-field"
+          dir="auto"
+          placeholder="מה עובר לך בראש?"
+          value={text}
+          rows={3}
+          enterKeyHint="enter"
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault()
+              save(false)
+            }
+          }}
+        />
+      </div>
 
       <div className={'capture-topics' + (nudge ? ' nudge' : '')}>
         <div className="capture-topics-head">

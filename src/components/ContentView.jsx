@@ -44,7 +44,7 @@ export function parseBlocks(content) {
       continue
     }
     let m
-    if ((m = line.match(/^\s*[-*•]\s+\[( |x|X)\]\s?(.*)$/))) blocks.push({ type: 'check', done: m[1] !== ' ', text: m[2], line: i })
+    if ((m = line.match(/^\s*[-*•]\s+\[( |x|X|✓)\]\s?(.*)$/))) blocks.push({ type: 'check', done: m[1] !== ' ', text: m[2], line: i })
     else if ((m = line.match(/^(#{1,3})\s+(.*)$/))) blocks.push({ type: 'h', level: m[1].length, text: m[2], line: i })
     else if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) blocks.push({ type: 'bullet', text: m[1], line: i })
     else if ((m = line.match(/^\s*(\d+)[.)]\s+(.*)$/))) blocks.push({ type: 'num', n: m[1], text: m[2], line: i })
@@ -58,7 +58,7 @@ export function parseBlocks(content) {
 export function toggleCheckLine(content, lineIndex) {
   const lines = content.split('\n')
   const line = lines[lineIndex]
-  lines[lineIndex] = line.replace(/\[( |x|X)\]/, (m, c) => (c === ' ' ? '[x]' : '[ ]'))
+  lines[lineIndex] = line.replace(/\[( |x|X|✓)\]/, (m, c) => (c === ' ' ? '[✓]' : '[ ]'))
   return lines.join('\n')
 }
 

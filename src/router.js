@@ -12,7 +12,7 @@ function parse(hash) {
   const path = (hash || '').replace(/^#/, '') || '/'
   const parts = path.split('/').filter(Boolean)
   if (parts[0] === 't' && parts[1]) return { name: 'topic', id: parts[1], path }
-  if (parts[0] === 'i' && parts[1]) return { name: 'item', id: parts[1], path, isNew: parts[2] === 'new' }
+  if (parts[0] === 'i' && parts[1]) return { name: 'item', id: parts[1], path, isNew: parts[2] === 'new', edit: parts[2] === 'edit' }
   if (parts[0] === 'search') return { name: 'search', path }
   if (parts[0] === 'topics') return { name: 'topics', path }
   if (parts[0] === 'settings') return { name: 'settings', path }
